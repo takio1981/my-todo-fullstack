@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  # 1. ส่วน Database (เหมือนเดิม)
+  db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mypassword
+      MYSQL_DATABASE: todo_db
+    ports:
+      - "3306:3306"  # เปิดประตู 3306 จากข้างใน ออกมา 3306 ข้างนอก
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - my-app-network
+
+  # 2. ส่วน Backend (เพิ่มมาใหม่)
+  api:
+    build: ./backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: db  # บอก Backend ว่า Database ชื่อ "db" นะ
+    depends_on:
+      - db
+    networks:
+      - my-app-network
+
+  # 3. ส่วน Frontend (เพิ่มมาใหม่)
+  web:
+    build: ./frontend
+    restart: always
+    ports:
+      - "80:80" # เข้าผ่าน port 80 (ไม่ต้องพิมพ์ port)
+    depends_on:
+      - api
+    networks:
+      - my-app-network
+
+volumes:
+  db_data:
+
+networks:
+  my-app-network:
+    driver: bridge
